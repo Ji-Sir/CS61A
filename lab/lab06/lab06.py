@@ -3,6 +3,7 @@ class Transaction:
         self.id = id
         self.before = before
         self.after = after
+        
 
     def changed(self):
         """Return whether the transaction resulted in a changed balance."""
@@ -72,21 +73,28 @@ class Account:
     def __init__(self, account_holder):
         self.balance = 0
         self.holder = account_holder
+        self.transactions = []
+        self.transaction_count = 0  # 添加交易计数器
 
     def deposit(self, amount):
-        """Increase the account balance by amount, add the deposit
-        to the transaction history, and return the new balance.
-        """
+        before_balance = self.balance
         self.balance = self.balance + amount
+        # 使用 Transaction 对象记录交易
+        self.transactions.append(Transaction(self.transaction_count, before_balance, self.balance))
+        self.transaction_count += 1
         return self.balance
 
     def withdraw(self, amount):
-        """Decrease the account balance by amount, add the withdraw
-        to the transaction history, and return the new balance.
-        """
+        before_balance = self.balance
         if amount > self.balance:
+            # 记录失败的交易
+            self.transactions.append(Transaction(self.transaction_count, before_balance, before_balance))
+            self.transaction_count += 1
             return 'Insufficient funds'
         self.balance = self.balance - amount
+        # 使用 Transaction 对象记录交易
+        self.transactions.append(Transaction(self.transaction_count, before_balance, self.balance))
+        self.transaction_count += 1
         return self.balance
 
 

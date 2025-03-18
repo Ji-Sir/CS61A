@@ -75,11 +75,14 @@ def count_occurrences(t, n, x):
     2
     """
     "*** YOUR CODE HERE ***"
+<<<<<<< HEAD
     count = 0
     for i in range(n):
         if next(t) == x:
             count += 1
     return count
+=======
+>>>>>>> 26a363d031731771a3982b08d24d7c94f9802b95
 
 
 def repeated(t, k):
@@ -103,6 +106,7 @@ def repeated(t, k):
     """
     assert k > 1
     "*** YOUR CODE HERE ***"
+<<<<<<< HEAD
     count = 1
     prev = next(t)
     while True:
@@ -114,6 +118,8 @@ def repeated(t, k):
         else:
             count = 1
         prev = current
+=======
+>>>>>>> 26a363d031731771a3982b08d24d7c94f9802b95
 
 
 def sprout_leaves(t, leaves):
@@ -150,11 +156,14 @@ def sprout_leaves(t, leaves):
           2
     """
     "*** YOUR CODE HERE ***"
+<<<<<<< HEAD
     if is_leaf(t):
         return tree(label(t), [tree(leaf) for leaf in leaves])
     else:
         return tree(label(t), [sprout_leaves(branch, leaves) for branch in branches(t)])
 
+=======
+>>>>>>> 26a363d031731771a3982b08d24d7c94f9802b95
 
 
 def partial_reverse(s, start):
@@ -170,8 +179,11 @@ def partial_reverse(s, start):
     [1, 2, 7, 6, 5, 3, 4]
     """
     "*** YOUR CODE HERE ***"
+<<<<<<< HEAD
     s[start:] = s[start:][::-1]
     return s
+=======
+>>>>>>> 26a363d031731771a3982b08d24d7c94f9802b95
 
 
 
