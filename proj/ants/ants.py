@@ -27,6 +27,8 @@ class Place:
         # Phase 1: Add an entrance to the exit
         # BEGIN Problem 2
         "*** YOUR CODE HERE ***"
+        if exit is not None:
+            exit.entrance = self
         # END Problem 2
 
     def add_insect(self, insect):
@@ -142,6 +144,7 @@ class HarvesterAnt(Ant):
 
     name = 'Harvester'
     implemented = True
+    food_cost = 2
     # OVERRIDE CLASS ATTRIBUTES HERE
 
     def action(self, gamestate):
@@ -150,7 +153,7 @@ class HarvesterAnt(Ant):
         gamestate -- The GameState, used to access game state information.
         """
         # BEGIN Problem 1
-        "*** YOUR CODE HERE ***"
+        gamestate.food += 1
         # END Problem 1
 
 
@@ -160,6 +163,9 @@ class ThrowerAnt(Ant):
     name = 'Thrower'
     implemented = True
     damage = 1
+    food_cost = 3
+    lower_bound = 0
+    upper_bound = float('inf')
     # ADD/OVERRIDE CLASS ATTRIBUTES HERE
 
     def nearest_bee(self):
@@ -169,7 +175,16 @@ class ThrowerAnt(Ant):
         This method returns None if there is no such Bee (or none in range).
         """
         # BEGIN Problem 3 and 4
-        return random_bee(self.place.bees) # REPLACE THIS LINE
+        nearest_bee = None
+        place = self.place
+        i = 0
+        while place.is_hive is False:
+            if place.bees and i >= self.lower_bound and i <= self.upper_bound:
+                nearest_bee = random_bee(place.bees)
+                break
+            place = place.entrance
+            i += 1
+        return nearest_bee
         # END Problem 3 and 4
 
     def throw_at(self, target):
@@ -201,7 +216,9 @@ class ShortThrower(ThrowerAnt):
     food_cost = 2
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem 4
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
+    lower_bound = 0
+    upper_bound = 3
     # END Problem 4
 
 
@@ -212,7 +229,9 @@ class LongThrower(ThrowerAnt):
     food_cost = 2
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem 4
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
+    lower_bound = 5
+    upper_bound = float('inf')
     # END Problem 4
 
 
@@ -224,7 +243,7 @@ class FireAnt(Ant):
     food_cost = 5
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem 5
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
     # END Problem 5
 
     def __init__(self, health=3):
@@ -232,22 +251,49 @@ class FireAnt(Ant):
         super().__init__(health)
 
     def reduce_health(self, amount):
-        """Reduce health by AMOUNT, and remove the FireAnt from its place if it
-        has no health remaining.
-
-        Make sure to reduce the health of each bee in the current place, and apply
-        the additional damage if the fire ant dies.
-        """
-        # BEGIN Problem 5
-        "*** YOUR CODE HERE ***"
+        remaining_health = self.health  # 先保存当前生命值
+        if remaining_health <= amount:  # 使用保存的值判断
+            for bee in self.place.bees[:]:
+                bee.reduce_health(self.damage + remaining_health)
+        else:
+            for bee in self.place.bees[:]:
+                bee.reduce_health(amount)
+        super().reduce_health(amount) 
+            
         # END Problem 5
 
 # BEGIN Problem 6
 # The WallAnt class
+class WallAnt(Ant):
+    """WallAnt provides defense to other Ants."""
+    name = 'Wall'
+    food_cost = 4
+    implemented = True   # Change to True to view in the GUI
+    def __init__(self, health=4):
+        super().__init__(health)
 # END Problem 6
 
 # BEGIN Problem 7
 # The HungryAnt Class
+class HungryAnt(Ant):
+    """HungryAnt eats a Bee in its place each turn."""
+    name = 'Hungry'
+    food_cost = 4
+    implemented = True   # Change to True to view in the GUI
+    chewing_turns = 3
+    def __init__(self, health=1):
+        self.turns_to_chew = 0
+        super().__init__(health)
+    def action(self, gamestate):
+        if self.turns_to_chew == 0:
+            bee = random_bee(self.place.bees)
+            if bee:
+                bee.reduce_health(bee.health)
+                self.turns_to_chew = self.chewing_turns
+        else:
+            self.turns_to_chew -= 1
+        return super().action(gamestate)
+    
 # END Problem 7
 
 
