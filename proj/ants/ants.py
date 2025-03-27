@@ -52,6 +52,7 @@ class Insect:
 
     next_id = 0  # Every insect gets a unique id number
     damage = 0
+    is_waterproof = False
     # ADD CLASS ATTRIBUTES HERE
 
     def __init__(self, health, place=None):
@@ -104,6 +105,7 @@ class Ant(Insect):
 
     def __init__(self, health=1):
         super().__init__(health)
+        self.damage_doubled = False
 
     def can_contain(self, other):
         return False
@@ -119,7 +121,17 @@ class Ant(Insect):
             place.ant = self
         else:
             # BEGIN Problem 8b
-            assert place.ant is None, 'Too many ants in {0}'.format(place)
+            original_ant = place.ant
+            if original_ant.can_contain(self):
+                original_ant.store_ant(self)
+                Insect.add_to(self, place)
+                return
+            elif self.can_contain(original_ant):
+                self.store_ant(original_ant)
+                place.ant = self
+            else:
+                assert place.ant is None, 'Too many ants in {0}'.format(place)
+                assert self.can_contain(place.ant), '{0} cannot contain {1}'.format(self, place.ant)
             # END Problem 8b
         Insect.add_to(self, place)
 
@@ -136,6 +148,7 @@ class Ant(Insect):
         """Double this ants's damage, if it has not already been doubled."""
         # BEGIN Problem 12
         "*** YOUR CODE HERE ***"
+        self.damage *= 2
         # END Problem 12
 
 
@@ -310,11 +323,13 @@ class ContainerAnt(Ant):
     def can_contain(self, other):
         # BEGIN Problem 8a
         "*** YOUR CODE HERE ***"
+        return self.ant_contained is None and other is not self and not other.is_container
         # END Problem 8a
 
     def store_ant(self, ant):
         # BEGIN Problem 8a
         "*** YOUR CODE HERE ***"
+        self.ant_contained = ant
         # END Problem 8a
 
     def remove_ant(self, ant):
@@ -335,6 +350,8 @@ class ContainerAnt(Ant):
     def action(self, gamestate):
         # BEGIN Problem 8a
         "*** YOUR CODE HERE ***"
+        if self.ant_contained:
+            self.ant_contained.action(gamestate)
         # END Problem 8a
 
 
@@ -345,11 +362,26 @@ class BodyguardAnt(ContainerAnt):
     food_cost = 4
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem 8c
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
+    def __init__(self, health=2):
+        super().__init__(health)
     # END Problem 8c
 
 # BEGIN Problem 9
 # The TankAnt class
+class TankAnt(ContainerAnt):
+    """TankAnt provides both offensive and defensive capabilities."""
+    name = 'Tank'
+    food_cost = 6
+    implemented = True
+    damage = 1
+    def __init__(self, health=2):
+        super().__init__(health)
+    def action(self, gamestate):
+        bee = self.place.bees[:]
+        for i in range(len(bee)):
+            bee[i].reduce_health(self.damage)
+        return super().action(gamestate)
 # END Problem 9
 
 
@@ -361,11 +393,21 @@ class Water(Place):
         its health to 0."""
         # BEGIN Problem 10
         "*** YOUR CODE HERE ***"
+        super().add_insect(insect)
+        if insect.is_waterproof == False:
+            insect.reduce_health(insect.health)
         # END Problem 10
 
 # BEGIN Problem 11
 # The ScubaThrower class
+class ScubaThrower(ThrowerAnt):
+    """ScubaThrower is a ThrowerAnt that is waterproof."""
+    name = 'Scuba'
+    food_cost = 6
+    implemented = True
+    is_waterproof = True
 # END Problem 11
+
 
 
 class QueenAnt(ThrowerAnt):
@@ -375,7 +417,32 @@ class QueenAnt(ThrowerAnt):
     food_cost = 7
     # OVERRIDE CLASS ATTRIBUTES HERE
     # BEGIN Problem 12
-    implemented = False   # Change to True to view in the GUI
+    implemented = True   # Change to True to view in the GUI
+    queen_exists = False
+
+    def __init__(self):
+        super().__init__()
+        if not QueenAnt.queen_exists:
+            QueenAnt.queen_exists = True
+            self.is_original = True
+        else:
+            self.is_original = False
+
+    def action(self, gamestate):
+        if self.is_original:
+            place = self.place
+            while place is not None:
+                if place.ant and place.ant is not self and not place.ant.damage_doubled:
+                    place.ant.damage_doubled = True
+                    place.ant.double()
+                place = place.exit # changed to exit
+        super().action(gamestate)
+
+    def reduce_health(self, amount):
+        super().reduce_health(amount)
+        if self.health <= 0:
+            ants_lose()
+
     # END Problem 12
 
     def action(self, gamestate):
